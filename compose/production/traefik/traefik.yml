@@ -5,50 +5,25 @@ entryPoints:
   web:
     # http
     address: ':80'
-    http:
-      # https://doc.traefik.io/traefik/routing/entrypoints/#entrypoint
-      redirections:
-        entryPoint:
-          to: web-secure
-
-  web-secure:
-    # https
-    address: ':443'
 
   flower:
     address: ':5555'
 
-certificatesResolvers:
-  letsencrypt:
-    # https://doc.traefik.io/traefik/https/acme/#lets-encrypt
-    acme:
-      email: 'daniel-roy-greenfeld@example.com'
-      storage: /etc/traefik/acme/acme.json
-      # https://doc.traefik.io/traefik/https/acme/#httpchallenge
-      httpChallenge:
-        entryPoint: web
-
 http:
   routers:
-    web-secure-router:
+    web-router:
       rule: 'PathPrefix(`/`)'
       entryPoints:
-        - web-secure
+        - web
       middlewares:
         - csrf
       service: frontend
-      tls:
-        # https://doc.traefik.io/traefik/routing/routers/#certresolver
-        certResolver: letsencrypt
 
-    flower-secure-router:
-      rule: 'Host(`example.com`)'
+    flower-router:
+      rule: 'PathPrefix(`/`)'
       entryPoints:
         - flower
       service: flower
-      tls:
-        # https://doc.traefik.io/traefik/master/routing/routers/#certresolver
-        certResolver: letsencrypt
 
   middlewares:
     csrf:
