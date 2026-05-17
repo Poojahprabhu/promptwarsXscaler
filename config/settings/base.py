@@ -1,6 +1,7 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
 
+import os
 import ssl
 from pathlib import Path
 
@@ -72,6 +73,7 @@ DJANGO_APPS = [
     "django.forms",
 ]
 THIRD_PARTY_APPS = [
+    "corsheaders",
     "crispy_forms",
     "crispy_bootstrap5",
     "allauth",
@@ -85,7 +87,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "scaler.users",
-    # Your stuff: custom apps go here
+    "scaler.documents",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -134,6 +136,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -335,6 +338,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.MultiPartParser",
     ],
     "NON_FIELD_ERRORS_KEY": "errors",
 }
@@ -355,6 +359,41 @@ SIMPLE_JWT = {
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
 }
+
+# Document Processing Pipeline
+# ------------------------------------------------------------------------------
+GOOGLE_AI_STUDIO_API_KEY = env("GOOGLE_AI_STUDIO_API_KEY", default="")
+# google-adk Agents construct their genai Client from env vars (GOOGLE_API_KEY /
+# GEMINI_API_KEY), not from settings — bridge the value through so a single
+# GOOGLE_AI_STUDIO_API_KEY is the source of truth.
+if GOOGLE_AI_STUDIO_API_KEY:
+    os.environ.setdefault("GOOGLE_API_KEY", GOOGLE_AI_STUDIO_API_KEY)
+
+# Cap the per-request completion token budget across all LLM providers.
+LLM_MAX_TOKENS = env.int("LLM_MAX_TOKENS", default=8192)
+
+# Mistral — used both for embeddings (OpenAI-compatible /v1/embeddings) and for
+# chat completions via google-adk's LiteLlm wrapper. LiteLLM reads MISTRAL_API_KEY
+# from the environment, so we bridge it there.
+MISTRAL_BASE_URL = env("MISTRAL_BASE_URL", default="https://api.mistral.ai/v1")
+MISTRAL_API_KEY = env("MISTRAL_API_KEY", default="")
+if MISTRAL_API_KEY:
+    os.environ.setdefault("MISTRAL_API_KEY", MISTRAL_API_KEY)
+MISTRAL_EMBEDDINGS_MODEL = env("MISTRAL_EMBEDDINGS_MODEL", default="mistral-embed")
+MISTRAL_FLASH_MODEL = env("MISTRAL_FLASH_MODEL", default="mistral-small-latest")
+MISTRAL_PRO_MODEL = env("MISTRAL_PRO_MODEL", default="mistral-large-latest")
+
+GCP_STORAGE_BUCKET_NAME = env("DJANGO_GCP_STORAGE_BUCKET_NAME", default="")
+
+QDRANT_URL = env("QDRANT_URL", default="")
+QDRANT_API_KEY = env("QDRANT_API_KEY", default="")
+QDRANT_COLLECTION_NAME = env("QDRANT_COLLECTION_NAME", default="document_chunks")
+
+DOCUMENT_MAX_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
+DOCUMENT_ALLOWED_MIME_TYPES = [
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]
 
 # Your stuff...
 # ------------------------------------------------------------------------------

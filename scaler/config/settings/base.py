@@ -83,7 +83,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "scaler.users",
-    # Your stuff: custom apps go here
+    "scaler.documents",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -318,6 +318,23 @@ SOCIALACCOUNT_ADAPTER = "scaler.users.adapters.SocialAccountAdapter"
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
 SOCIALACCOUNT_FORMS = {"signup": "scaler.users.forms.UserSocialSignupForm"}
 
+
+# Document Processing Pipeline
+# ------------------------------------------------------------------------------
+GOOGLE_AI_STUDIO_API_KEY = env("GOOGLE_AI_STUDIO_API_KEY", default="")
+GCP_STORAGE_BUCKET_NAME = env("DJANGO_GCP_STORAGE_BUCKET_NAME", default="")
+
+QDRANT_URL = env("QDRANT_URL", default="")
+QDRANT_API_KEY = env("QDRANT_API_KEY", default="")
+QDRANT_COLLECTION_NAME = env("QDRANT_COLLECTION_NAME", default="document_chunks")
+
+# Maximum allowed upload size: 50 MB
+DOCUMENT_MAX_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024
+DOCUMENT_ALLOWED_MIME_TYPES = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+
+# Celery time limits for document processing tasks (30 min hard / 25 min soft)
+DOCUMENT_TASK_TIME_LIMIT = 30 * 60
+DOCUMENT_TASK_SOFT_TIME_LIMIT = 25 * 60
 
 # Your stuff...
 # ------------------------------------------------------------------------------

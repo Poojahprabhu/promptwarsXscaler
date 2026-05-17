@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Risk analysis — LexGuard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+  <div class="app-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar__logo">
+        <a href="dashboard.html" class="logo">
+          <div class="logo__mark"><i class="ti ti-shield-check"></i></div>
+          <div>
+            <div class="logo__name">LexGuard</div>
+            <div class="logo__sub">AI Rights &amp; Contract Intelligence</div>
+          </div>
+        </a>
+      </div>
+      <nav class="sidebar__nav">
+        <a href="dashboard.html" class="sidebar__link">
+          <i class="ti ti-layout-dashboard"></i> Dashboard
+        </a>
+        <a href="upload.html" class="sidebar__link">
+          <i class="ti ti-upload"></i> New analysis
+        </a>
+        <a href="#" class="sidebar__link sidebar__link--active">
+          <i class="ti ti-eye"></i> Current report
+        </a>
+      </nav>
+      <div class="sidebar__footer">
+        <div class="sidebar__user-name" id="sidebar-user-name">—</div>
+        <div class="sidebar__user-email" id="sidebar-user-email">—</div>
+        <button class="btn btn--ghost" style="padding:6px 0; font-size:12px;" onclick="logout()">
+          <i class="ti ti-logout"></i> Sign out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="app-main">
+      <div class="app-main__inner" style="max-width:760px;">
+
+        <!-- Back link + doc name -->
+        <div style="margin-bottom:1.5rem;">
+          <a href="dashboard.html" style="display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--color-text-secondary); text-decoration:none; margin-bottom:10px;">
+            <i class="ti ti-arrow-left"></i> Back to dashboard
+          </a>
+          <div class="text-label" style="margin-bottom:4px;" id="doc-type-label">Contract</div>
+          <h1 class="page-header__title" id="doc-title">Document analysis</h1>
+        </div>
+
+        <!-- Demo notice -->
+        <div id="demo-notice" class="alert alert--info" style="display:none; margin-bottom:1.5rem;">
+          <i class="ti ti-info-circle"></i>
+          <span>Showing demo data. Wire up <code style="font-family:var(--font-mono); font-size:12px;">GET /documents/{id}/analysis/</code> in <code style="font-family:var(--font-mono); font-size:12px;">js/api.js</code> to load real results.</span>
+        </div>
+
+        <!-- Risk score -->
+        <div class="score-bar" style="margin-bottom:1rem;" id="score-section">
+          <div class="score-bar__header">
+            <span class="score-bar__label">Overall risk score</span>
+            <span class="score-bar__value" id="score-value">—</span>
+          </div>
+          <div class="score-bar__track">
+            <div class="score-bar__fill" id="score-fill" style="width:0%;"></div>
+          </div>
+          <div class="score-bar__summary" id="score-summary">—</div>
+        </div>
+
+        <!-- Metric cards -->
+        <div class="metrics-grid" style="margin-bottom:2rem;" id="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-card__label">Clauses scanned</div>
+            <div class="metric-card__value" id="m-total">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card__label">Critical</div>
+            <div class="metric-card__value" style="color:var(--color-text-danger);" id="m-critical">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card__label">Caution</div>
+            <div class="metric-card__value" style="color:var(--color-text-warning);" id="m-caution">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card__label">Ambiguous</div>
+            <div class="metric-card__value" style="color:var(--color-text-ambiguous);" id="m-ambiguous">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card__label">Safe</div>
+            <div class="metric-card__value" style="color:var(--color-text-success);" id="m-safe">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card__label">Neutral</div>
+            <div class="metric-card__value" id="m-neutral">—</div>
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Processing notice (shown while document is still being analyzed) -->
+        <div id="processing-notice" class="alert alert--info" style="display:none; margin-bottom:1.5rem;">
+          <i class="ti ti-loader spinner" style="animation: spin 1.2s linear infinite;"></i>
+          <span id="processing-text">Analyzing document — this can take 30–90 seconds…</span>
+        </div>
+
+        <!-- Clause list -->
+        <div style="margin-bottom:1.5rem;">
+          <div class="text-label" style="margin-bottom:12px;">Clause breakdown</div>
+          <div class="clause-list" id="clause-list">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+
+        <!-- Financial risks summary (clauses with monetary exposure) -->
+        <div id="financial-section" style="display:none; margin-bottom:1.5rem;">
+          <div class="text-label" style="margin-bottom:12px;">
+            <i class="ti ti-cash"></i> Financial exposure summary
+          </div>
+          <div id="financial-list" class="clause-list"></div>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Q&A section -->
+        <div>
+          <div class="text-label" style="margin-bottom:4px;">Ask about this document</div>
+          <p style="font-size:13px; color:var(--color-text-secondary); margin-bottom:1rem;">
+            Ask any question about the contract — in plain language.
+          </p>
+
+          <div id="qa-notice" class="alert alert--info" style="display:none; margin-bottom:1rem;">
+            <i class="ti ti-info-circle"></i>
+            <span>Q&amp;A API not yet configured. Wire up <code style="font-family:var(--font-mono); font-size:12px;">POST /documents/{id}/query/</code> to enable real answers.</span>
+          </div>
+
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-message">
+              <div class="chat-avatar chat-avatar--ai"><i class="ti ti-robot"></i></div>
+              <div class="chat-bubble chat-bubble--ai">
+                I've read every clause. Ask me anything — "Can they fire me without severance?", "What happens if I leave early?", "Is this NDA enforceable?"
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-input-row">
+            <textarea class="chat-input" id="chat-input" placeholder="Ask a question about this document…" rows="1" onkeydown="onChatKeydown(event)"></textarea>
+            <button class="btn btn--primary" id="send-btn" onclick="sendQuestion()">
+              <i class="ti ti-send"></i>
+            </button>
+          </div>
+        </div>
+
+        <div style="height:2rem;"></div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    if (!LexAuth.requireAuth()) { /* redirects */ }
+
+    const user = LexAuth.getUser();
+    if (user) {
+      document.getElementById('sidebar-user-name').textContent = user.name || user.username;
+      document.getElementById('sidebar-user-email').textContent = user.email;
+    }
+
+    function logout() {
+      LexAuth.clear();
+      window.location.href = 'auth.html';
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const docId = params.get('doc') || 'demo';
+    const docNameParam = params.get('name');
+
+    /* ── Risk score rendering ── */
+    function renderScore(score) {
+      const rounded = Math.round(score);
+      let cls, label;
+      if (score <= 30)  { cls = 'low';    label = 'Low risk';      }
+      else if (score <= 60) { cls = 'medium'; label = 'Moderate risk'; }
+      else              { cls = 'high';   label = 'High risk';     }
+
+      document.getElementById('score-value').textContent = rounded + ' / 100';
+      document.getElementById('score-value').className = 'score-bar__value score-bar__value--' + cls;
+
+      const fill = document.getElementById('score-fill');
+      fill.className = 'score-bar__fill score-bar__fill--' + cls;
+      setTimeout(() => { fill.style.width = rounded + '%'; }, 100);
+    }
+
+    /* ── Clause card rendering ── */
+    /* Backend severities: critical | high | medium | low | safe.
+       Plus the legacy demo values (caution, ambiguous, neutral) for backward compat. */
+    const BADGE = {
+      critical:  { cls: 'critical',  icon: 'alert-triangle',  label: 'Critical risk' },
+      high:      { cls: 'caution',   icon: 'alert-circle',    label: 'High risk' },
+      medium:    { cls: 'caution',   icon: 'alert-circle',    label: 'Medium risk' },
+      low:       { cls: 'neutral',   icon: 'minus',           label: 'Low risk' },
+      caution:   { cls: 'caution',   icon: 'alert-circle',    label: 'Caution' },
+      safe:      { cls: 'safe',      icon: 'circle-check',    label: 'Safe' },
+      ambiguous: { cls: 'ambiguous', icon: 'info-circle',     label: 'Ambiguous' },
+      neutral:   { cls: 'neutral',   icon: 'minus',           label: 'Neutral' },
+    };
+
+    /* Group backend severities into the 5 metric buckets shown on the page */
+    function metricBucket(severity, hasAmbiguousTerms) {
+      if (severity === 'critical') return 'critical';
+      if (severity === 'high' || severity === 'medium' || severity === 'caution') return 'caution';
+      if (severity === 'safe') return 'safe';
+      if (hasAmbiguousTerms) return 'ambiguous';
+      return 'neutral';
+    }
+
+    function renderBadge(severity) {
+      const b = BADGE[severity] || BADGE.neutral;
+      return `<span class="risk-badge risk-badge--${b.cls}"><i class="ti ti-${b.icon}"></i> ${b.label}</span>`;
+    }
+
+    function renderClauses(clauses) {
+      const container = document.getElementById('clause-list');
+      if (!clauses.length) {
+        container.innerHTML = '<div class="alert alert--info"><i class="ti ti-info-circle"></i><span>No clauses were analyzed for this document.</span></div>';
+        return;
+      }
+      container.innerHTML = clauses.map((c, i) => {
+        const ambigList = (c.ambiguous_terms || []).filter(Boolean);
+        const ambiguousBlock = ambigList.length
+          ? `<div class="clause-card__ambiguous" style="margin-top:10px; font-size:13px; color:var(--color-text-secondary);">
+               <strong>Ambiguous terms:</strong> ${ambigList.map(t => `<code style="font-family:var(--font-mono); font-size:12px;">${escapeHtml(t)}</code>`).join(', ')}
+               ${c.risk_of_interpretation ? `<div style="margin-top:6px;">${escapeHtml(c.risk_of_interpretation)}</div>` : ''}
+             </div>`
+          : '';
+        const financialBlock = c.financial
+          ? `<div class="clause-card__financial" style="margin-top:12px; padding:10px 12px; background:var(--color-surface-subtle, rgba(0,0,0,0.03)); border-radius:6px; font-size:13px;">
+               <div style="font-weight:600; display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                 <i class="ti ti-cash"></i> Financial exposure
+               </div>
+               <div><strong>Exposure:</strong> ${escapeHtml(c.financial.exposure)}</div>
+               ${c.financial.conditions ? `<div><strong>When:</strong> ${escapeHtml(c.financial.conditions)}</div>` : ''}
+               ${c.financial.worst_case ? `<div><strong>Worst case:</strong> ${escapeHtml(c.financial.worst_case)}</div>` : ''}
+             </div>`
+          : '';
+        return `
+        <div class="clause-card" id="clause-${i}">
+          <div class="clause-card__header" onclick="toggleClause(${i})">
+            <span class="clause-card__id">${escapeHtml(c.id)}</span>
+            <span class="clause-card__title">${escapeHtml(c.title)}</span>
+            ${renderBadge(c.severity)}
+            <i class="ti ti-chevron-down clause-card__chevron"></i>
+          </div>
+          <div class="clause-card__body">
+            ${c.excerpt ? `<div class="clause-card__excerpt">"${escapeHtml(c.excerpt)}"</div>` : ''}
+            <div class="clause-card__analysis">${escapeHtml(c.analysis)}</div>
+            ${ambiguousBlock}
+            ${financialBlock}
+            ${c.action ? `
+              <div class="clause-card__action">
+                <strong>What to do:</strong> ${escapeHtml(c.action)}
+              </div>
+            ` : ''}
+            <div class="clause-card__footer">
+              ${renderBadge(c.severity)}
+              <button class="btn btn--danger" onclick="event.stopPropagation(); flagClause('${escapeHtml(c.id)}')">
+                <i class="ti ti-flag"></i> Flag clause
+              </button>
+            </div>
+          </div>
+        </div>
+      `;}).join('');
+    }
+
+    function toggleClause(i) {
+      const card = document.getElementById('clause-' + i);
+      card.classList.toggle('open');
+    }
+
+    function flagClause(id) {
+      alert('Clause ' + id + ' flagged. Connect to your flagging API to persist this.');
+    }
+
+    /* ── Metrics rendering ── */
+    function renderMetrics(analysis) {
+      const counts = { critical: 0, caution: 0, safe: 0, ambiguous: 0, neutral: 0 };
+      (analysis.clauses || []).forEach(c => {
+        const hasAmbig = Array.isArray(c.ambiguous_terms) && c.ambiguous_terms.length > 0;
+        const bucket = metricBucket(c.severity, hasAmbig);
+        counts[bucket]++;
+      });
+
+      document.getElementById('m-total').textContent = (analysis.clauses || []).length;
+      document.getElementById('m-critical').textContent = counts.critical;
+      document.getElementById('m-caution').textContent = counts.caution;
+      document.getElementById('m-ambiguous').textContent = counts.ambiguous;
+      document.getElementById('m-safe').textContent = counts.safe;
+      document.getElementById('m-neutral').textContent = counts.neutral;
+
+      const parts = [];
+      if (counts.critical)  parts.push(counts.critical + ' critical');
+      if (counts.caution)   parts.push(counts.caution + ' caution');
+      if (counts.ambiguous) parts.push(counts.ambiguous + ' ambiguous');
+      document.getElementById('score-summary').textContent = parts.join(' · ') || 'No high-risk clauses';
+    }
+
+    function renderFinancialList(financialRisks) {
+      const section = document.getElementById('financial-section');
+      const list = document.getElementById('financial-list');
+      if (!financialRisks || !financialRisks.length) {
+        section.style.display = 'none';
+        return;
+      }
+      section.style.display = 'block';
+      list.innerHTML = financialRisks.map(fr => `
+        <div class="clause-card open">
+          <div class="clause-card__header">
+            <span class="clause-card__id">${escapeHtml(fr.clause_id)}</span>
+            <span class="clause-card__title">${escapeHtml(fr.financial_exposure || 'Financial obligation')}</span>
+            <span class="risk-badge risk-badge--caution"><i class="ti ti-cash"></i> Financial</span>
+          </div>
+          <div class="clause-card__body">
+            ${fr.conditions ? `<div class="clause-card__analysis"><strong>When this triggers:</strong> ${escapeHtml(fr.conditions)}</div>` : ''}
+            ${fr.worst_case_cost ? `<div class="clause-card__action"><strong>Worst-case cost:</strong> ${escapeHtml(fr.worst_case_cost)}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderAnalysis(analysis) {
+      document.getElementById('doc-title').textContent = analysis.name || decodeURIComponent(docNameParam || 'Document analysis');
+      document.getElementById('doc-type-label').textContent = formatDocType(analysis.type) || 'Contract';
+      renderScore(analysis.score || 0);
+      renderMetrics(analysis);
+      renderClauses(analysis.clauses || []);
+      renderFinancialList(analysis.financial_risks || []);
+    }
+
+    function formatDocType(t) {
+      if (!t) return '';
+      return String(t).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    /* ── Demo data ── */
+    const DEMO_ANALYSIS = {
+      id: 'demo',
+      name: docNameParam ? decodeURIComponent(docNameParam) : 'Employment Offer Letter',
+      type: 'Offer letter',
+      score: 74,
+      clauses: [
+        {
+          id: 'CLAUSE-EMP-001',
+          title: 'Intellectual property assignment',
+          severity: 'critical',
+          excerpt: 'All work product created by Employee, including work created outside normal working hours using personal equipment, shall be the exclusive property of the Company.',
+          analysis: 'This clause claims ownership of everything you create — including personal projects, side projects, and work done at home on your own time. This goes far beyond standard IP clauses, which typically cover only work done during employment and on company resources.',
+          action: 'Negotiate a carve-out for personal projects created outside work hours and with your own equipment. Ask for an exhibit listing pre-existing inventions you want excluded.',
+        },
+        {
+          id: 'CLAUSE-EMP-002',
+          title: 'Non-compete agreement',
+          severity: 'critical',
+          excerpt: 'Employee agrees not to work for any competitor or start a competing business for a period of 24 months after termination, in any country or region where Company operates.',
+          analysis: 'A 2-year global non-compete is extremely broad. You\'d be legally prevented from working in your field for two years after leaving — anywhere the company does business. While unenforceable in California and some other states, most jurisdictions allow this.',
+          action: 'Push back hard. Propose a 6-month restriction limited to your direct role and geography. Consult an employment lawyer before signing.',
+        },
+        {
+          id: 'CLAUSE-EMP-003',
+          title: 'Mandatory arbitration',
+          severity: 'caution',
+          excerpt: 'All disputes arising from or related to this agreement shall be resolved through binding arbitration administered by AAA, and not in any court.',
+          analysis: 'You\'re waiving your right to sue in court and your right to participate in class action lawsuits. Arbitration primarily benefits the employer — it\'s faster but limits your discovery rights and appeal options.',
+          action: 'Try to negotiate this out. If the company insists, make sure the agreement specifies who pays arbitration fees and that the arbitrator must be neutral.',
+        },
+        {
+          id: 'CLAUSE-EMP-004',
+          title: 'Confidentiality scope',
+          severity: 'ambiguous',
+          excerpt: 'Employee shall keep all Proprietary Information strictly confidential during and after employment.',
+          analysis: '"Proprietary Information" is referenced throughout this agreement but never precisely defined. This gives the company wide discretion to later claim that things you\'ve shared — even publicly available knowledge — were confidential.',
+          action: 'Request a clear definition of "Proprietary Information" or ask for an explicit list of what is and isn\'t covered.',
+        },
+        {
+          id: 'CLAUSE-EMP-005',
+          title: 'At-will employment',
+          severity: 'neutral',
+          excerpt: 'This is an at-will employment agreement. Either party may terminate the employment relationship at any time, with or without cause or notice.',
+          analysis: 'Standard in the US. This means the company can let you go without cause, and you can leave without notice. It\'s boilerplate — nothing unusual here.',
+          action: null,
+        },
+        {
+          id: 'CLAUSE-EMP-006',
+          title: 'Compensation',
+          severity: 'safe',
+          excerpt: 'Employee will receive a base salary of $[X], paid bi-weekly, subject to standard payroll deductions.',
+          analysis: 'Clear, standard, and fair. The payment schedule is normal and the deduction language is routine. Nothing unusual here.',
+          action: null,
+        },
+        {
+          id: 'CLAUSE-EMP-007',
+          title: 'Benefits',
+          severity: 'safe',
+          excerpt: 'Employee is eligible for Company\'s standard benefits package, including health insurance, 401(k) matching, and paid time off, per the Employee Handbook.',
+          analysis: 'Standard benefits clause. The reference to the Employee Handbook is normal — request a copy before signing to understand what "standard" actually means.',
+          action: null,
+        },
+        {
+          id: 'CLAUSE-EMP-008',
+          title: 'Governing law',
+          severity: 'neutral',
+          excerpt: 'This Agreement shall be governed by the laws of the State of Delaware, without regard to conflict of law principles.',
+          analysis: 'Common boilerplate. Delaware is a standard choice for corporate legal matters. No unusual risk here.',
+          action: null,
+        },
+      ],
+    };
+
+    /* ── Q&A ── */
+    let qaApiAvailable = true;
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function appendMessage(role, text) {
+      const container = document.getElementById('chat-messages');
+      const isUser = role === 'user';
+      const div = document.createElement('div');
+      div.className = 'chat-message' + (isUser ? ' chat-message--user' : '');
+      div.innerHTML = `
+        <div class="chat-avatar chat-avatar--${isUser ? 'user' : 'ai'}">
+          <i class="ti ti-${isUser ? 'user' : 'robot'}"></i>
+        </div>
+        <div class="chat-bubble chat-bubble--${isUser ? 'user' : 'ai'}">${escapeHtml(text)}</div>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function appendTypingIndicator() {
+      const container = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = 'chat-message';
+      div.id = 'typing-indicator';
+      div.innerHTML = `
+        <div class="chat-avatar chat-avatar--ai"><i class="ti ti-robot"></i></div>
+        <div class="chat-bubble chat-bubble--ai" style="color:var(--color-text-tertiary);">
+          <span class="spinner" style="width:14px; height:14px;"></span>
+        </div>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+      const el = document.getElementById('typing-indicator');
+      if (el) el.remove();
+    }
+
+    async function sendQuestion() {
+      const input = document.getElementById('chat-input');
+      const question = input.value.trim();
+      if (!question) return;
+
+      input.value = '';
+      input.style.height = 'auto';
+      document.getElementById('send-btn').disabled = true;
+
+      appendMessage('user', question);
+      appendTypingIndicator();
+
+      if (!qaApiAvailable) {
+        removeTypingIndicator();
+        appendMessage('ai', 'The Q&A API is not yet configured. Connect POST /documents/{id}/query/ to enable real answers.');
+        document.getElementById('send-btn').disabled = false;
+        return;
+      }
+
+      try {
+        const res = await LexAPI.documents.query(docId, question);
+        removeTypingIndicator();
+        let text = res.answer || '(empty response)';
+        if (Array.isArray(res.sources) && res.sources.length) {
+          const refs = res.sources
+            .map(s => s.section || s.chunk_id)
+            .filter(Boolean)
+            .slice(0, 3)
+            .join(', ');
+          if (refs) text += '\n\nSources: ' + refs;
+        }
+        appendMessage('ai', text);
+      } catch (err) {
+        removeTypingIndicator();
+        if (err.isNetworkError || err.message.includes('not yet configured')) {
+          qaApiAvailable = false;
+          document.getElementById('qa-notice').style.display = 'flex';
+          appendMessage('ai', 'The Q&A API is not yet configured. Connect POST /documents/{id}/query/ in js/api.js to enable real answers.');
+        } else {
+          appendMessage('ai', 'Something went wrong: ' + LexAPI.extractErrors(err));
+        }
+      }
+
+      document.getElementById('send-btn').disabled = false;
+    }
+
+    function onChatKeydown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendQuestion();
+      }
+    }
+
+    // Auto-resize textarea
+    document.getElementById('chat-input').addEventListener('input', function () {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    /* ── Load analysis ── */
+    function showProcessing(text) {
+      const notice = document.getElementById('processing-notice');
+      const textEl = document.getElementById('processing-text');
+      if (text) textEl.textContent = text;
+      notice.style.display = 'flex';
+    }
+
+    function hideProcessing() {
+      document.getElementById('processing-notice').style.display = 'none';
+    }
+
+    async function loadAnalysis() {
+      if (docId === 'demo') {
+        document.getElementById('demo-notice').style.display = 'flex';
+        renderAnalysis(DEMO_ANALYSIS);
+        return;
+      }
+
+      // Show a placeholder title from the URL while we wait for the API.
+      if (docNameParam) {
+        document.getElementById('doc-title').textContent = decodeURIComponent(docNameParam);
+      }
+
+      const MAX_ATTEMPTS = 60; // ~3 minutes at 3s interval
+      let attempt = 0;
+
+      while (attempt < MAX_ATTEMPTS) {
+        attempt += 1;
+        try {
+          const analysis = await LexAPI.documents.analysis(docId);
+          hideProcessing();
+          renderAnalysis(analysis);
+          return;
+        } catch (err) {
+          if (err.status === 409) {
+            // Still processing — show status and poll.
+            const detail = (err.data && (err.data.detail || err.data.status)) || 'Analyzing…';
+            showProcessing('Document is still being analyzed (' + detail + '). Polling every 3s…');
+            await new Promise(r => setTimeout(r, 3000));
+            continue;
+          }
+          if (err.status === 404) {
+            hideProcessing();
+            document.getElementById('demo-notice').style.display = 'flex';
+            renderAnalysis(DEMO_ANALYSIS);
+            return;
+          }
+          // Network or other error — back off and retry a few times.
+          if (attempt > 3) {
+            hideProcessing();
+            const demo = { ...DEMO_ANALYSIS, name: docNameParam ? decodeURIComponent(docNameParam) : DEMO_ANALYSIS.name };
+            document.getElementById('demo-notice').style.display = 'flex';
+            renderAnalysis(demo);
+            return;
+          }
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      }
+      showProcessing('Analysis is taking longer than expected. Please refresh in a minute.');
+    }
+
+    loadAnalysis();
+  </script>
+</body>
+</html>

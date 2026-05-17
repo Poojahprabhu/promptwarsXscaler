@@ -65,5 +65,15 @@ INSTALLED_APPS += ["django_extensions"]
 
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#task-eager-propagates
 CELERY_TASK_EAGER_PROPAGATES = True
+# CORS — allow the local frontend dev server to reach the API
+# ------------------------------------------------------------------------------
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://0.0.0.0:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5500",   # VS Code Live Server
+    "http://127.0.0.1:5500",
+]
+
 # Your stuff...
 # ------------------------------------------------------------------------------

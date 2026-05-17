@@ -11,4 +11,4 @@ until python manage.py migrate --check 2>/dev/null; do
 done
 echo "Migrations complete. Starting Celery Worker."
 
-exec watchfiles --filter python celery.__main__.main --args '-A config.celery_app worker -l INFO'
+exec watchfiles --filter python celery.__main__.main --args '-A config.celery_app worker -l INFO --pool=solo'

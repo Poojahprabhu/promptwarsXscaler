@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in — LexGuard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+  <div class="auth-page">
+    <div class="auth-card">
+
+      <!-- Logo -->
+      <div class="auth-card__logo">
+        <a href="index.html" class="logo">
+          <div class="logo__mark"><i class="ti ti-shield-check"></i></div>
+          <div>
+            <div class="logo__name">LexGuard</div>
+            <div class="logo__sub">AI Rights &amp; Contract Intelligence</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab auth-tab--active" id="tab-login" onclick="switchTab('login')">Sign in</button>
+        <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Create account</button>
+      </div>
+
+      <!-- Error banner (shared) -->
+      <div id="auth-error" class="alert alert--danger" style="display:none; margin-bottom:1rem;">
+        <i class="ti ti-alert-triangle"></i>
+        <span id="auth-error-text"></span>
+      </div>
+
+      <!-- Success banner -->
+      <div id="auth-success" class="alert alert--success" style="display:none; margin-bottom:1rem;">
+        <i class="ti ti-circle-check"></i>
+        <span id="auth-success-text"></span>
+      </div>
+
+      <!-- Login form -->
+      <form class="auth-form auth-form--active" id="form-login" onsubmit="handleLogin(event)">
+        <div class="form-stack">
+          <div class="form-group">
+            <label class="form-label" for="login-username">Username or email</label>
+            <input class="form-input" id="login-username" type="text" placeholder="alice or alice@example.com" autocomplete="username" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-password">Password</label>
+            <input class="form-input" id="login-password" type="password" placeholder="Your password" autocomplete="current-password" required />
+          </div>
+          <button class="btn btn--primary btn--full" type="submit" id="login-btn">
+            Sign in
+          </button>
+        </div>
+      </form>
+
+      <!-- Signup form -->
+      <form class="auth-form" id="form-signup" onsubmit="handleSignup(event)">
+        <div class="form-stack">
+          <div class="form-group">
+            <label class="form-label" for="signup-username">Username</label>
+            <input class="form-input" id="signup-username" type="text" placeholder="alice" autocomplete="username" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="signup-email">Email address</label>
+            <input class="form-input" id="signup-email" type="email" placeholder="alice@example.com" autocomplete="email" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="signup-name">Full name <span style="color:var(--color-text-tertiary); font-weight:400;">(optional)</span></label>
+            <input class="form-input" id="signup-name" type="text" placeholder="Alice Nguyen" autocomplete="name" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="signup-job">Job title <span style="color:var(--color-text-tertiary); font-weight:400;">(optional)</span></label>
+            <input class="form-input" id="signup-job" type="text" placeholder="Product manager" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="signup-password">Password</label>
+            <input class="form-input" id="signup-password" type="password" placeholder="Min 8 characters" autocomplete="new-password" required />
+            <span class="form-hint">Must be at least 8 characters and not too common.</span>
+          </div>
+          <button class="btn btn--primary btn--full" type="submit" id="signup-btn">
+            Create account
+          </button>
+        </div>
+      </form>
+
+      <p class="auth-footer">
+        <a href="index.html">Back to home</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    // Redirect to dashboard if already authenticated
+    if (LexAuth.isAuthenticated()) {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Read tab from URL param
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('tab') === 'signup') {
+      switchTab('signup');
+    }
+
+    function switchTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('tab-login').classList.toggle('auth-tab--active', isLogin);
+      document.getElementById('tab-signup').classList.toggle('auth-tab--active', !isLogin);
+      document.getElementById('form-login').classList.toggle('auth-form--active', isLogin);
+      document.getElementById('form-signup').classList.toggle('auth-form--active', !isLogin);
+      hideMessages();
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('auth-error');
+      document.getElementById('auth-error-text').textContent = msg;
+      el.style.display = 'flex';
+      document.getElementById('auth-success').style.display = 'none';
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('auth-success');
+      document.getElementById('auth-success-text').textContent = msg;
+      el.style.display = 'flex';
+      document.getElementById('auth-error').style.display = 'none';
+    }
+
+    function hideMessages() {
+      document.getElementById('auth-error').style.display = 'none';
+      document.getElementById('auth-success').style.display = 'none';
+    }
+
+    function setLoading(btnId, loading, label) {
+      const btn = document.getElementById(btnId);
+      btn.disabled = loading;
+      btn.innerHTML = loading
+        ? '<span class="spinner"></span> Please wait…'
+        : label;
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      hideMessages();
+      setLoading('login-btn', true, 'Sign in');
+
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      try {
+        const res = await LexAPI.auth.login({ username, password });
+        LexAuth.save(res.tokens, res.user);
+        showSuccess('Signed in. Redirecting…');
+        const redirect = urlParams.get('redirect');
+        setTimeout(() => {
+          window.location.href = redirect || 'dashboard.html';
+        }, 600);
+      } catch (err) {
+        showError(LexAPI.extractErrors(err));
+        setLoading('login-btn', false, 'Sign in');
+      }
+    }
+
+    async function handleSignup(e) {
+      e.preventDefault();
+      hideMessages();
+      setLoading('signup-btn', true, 'Create account');
+
+      const payload = {
+        username: document.getElementById('signup-username').value.trim(),
+        email: document.getElementById('signup-email').value.trim(),
+        password: document.getElementById('signup-password').value,
+      };
+      const name = document.getElementById('signup-name').value.trim();
+      const job_title = document.getElementById('signup-job').value.trim();
+      if (name) payload.name = name;
+      if (job_title) payload.job_title = job_title;
+
+      try {
+        const res = await LexAPI.auth.register(payload);
+        LexAuth.save(res.tokens, res.user);
+        showSuccess('Account created. Redirecting…');
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 600);
+      } catch (err) {
+        showError(LexAPI.extractErrors(err));
+        setLoading('signup-btn', false, 'Create account');
+      }
+    }
+  </script>
+</body>
+</html>

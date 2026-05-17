@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — LexGuard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+  <div class="app-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar__logo">
+        <a href="dashboard.html" class="logo">
+          <div class="logo__mark"><i class="ti ti-shield-check"></i></div>
+          <div>
+            <div class="logo__name">LexGuard</div>
+            <div class="logo__sub">AI Rights &amp; Contract Intelligence</div>
+          </div>
+        </a>
+      </div>
+      <nav class="sidebar__nav">
+        <a href="dashboard.html" class="sidebar__link sidebar__link--active">
+          <i class="ti ti-layout-dashboard"></i> Dashboard
+        </a>
+        <a href="upload.html" class="sidebar__link">
+          <i class="ti ti-upload"></i> New analysis
+        </a>
+      </nav>
+      <div class="sidebar__footer">
+        <div class="sidebar__user-name" id="user-name">—</div>
+        <div class="sidebar__user-email" id="user-email">—</div>
+        <button class="btn btn--ghost" style="padding:6px 0; font-size:12px;" onclick="logout()">
+          <i class="ti ti-logout"></i> Sign out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="app-main">
+      <div class="app-main__inner">
+
+        <!-- Page header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-header__title" id="greeting">Your documents</h1>
+            <p class="page-header__sub">All contract analyses, past and present.</p>
+          </div>
+          <a href="upload.html" class="btn btn--primary">
+            <i class="ti ti-upload"></i> New analysis
+          </a>
+        </div>
+
+        <!-- Summary stats -->
+        <div class="metrics-grid" style="margin-bottom:2rem;" id="stats-grid">
+          <div class="metric-card">
+            <div class="metric-card__label">Documents analyzed</div>
+            <div class="metric-card__value" id="stat-total">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card__label">Critical findings</div>
+            <div class="metric-card__value" style="color:var(--color-text-danger);" id="stat-critical">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card__label">High-risk docs</div>
+            <div class="metric-card__value" id="stat-high-risk">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card__label">Avg. risk score</div>
+            <div class="metric-card__value" id="stat-avg">—</div>
+          </div>
+        </div>
+
+        <!-- API notice (shown when document API isn't configured yet) -->
+        <div class="alert alert--info" id="api-notice" style="margin-bottom:1.5rem; display:none;">
+          <i class="ti ti-info-circle"></i>
+          <div>
+            Document history API not yet configured. Showing demo data.
+            Wire up <code style="font-family:var(--font-mono); font-size:12px;">GET /documents/</code> in <code style="font-family:var(--font-mono); font-size:12px;">js/api.js</code> to load real documents.
+          </div>
+        </div>
+
+        <!-- Documents grid -->
+        <div class="text-label" style="margin-bottom:10px;">Recent analyses</div>
+        <div class="doc-grid" id="doc-grid">
+          <!-- Filled by JS -->
+        </div>
+
+        <!-- Empty state -->
+        <div id="empty-state" style="display:none; text-align:center; padding:4rem 0;">
+          <i class="ti ti-file-text" style="font-size:40px; color:var(--color-text-tertiary); display:block; margin-bottom:1rem;"></i>
+          <div style="font-size:15px; font-weight:500; margin-bottom:6px;">No documents yet</div>
+          <p style="font-size:13px; color:var(--color-text-secondary); margin-bottom:1.5rem;">Upload a contract or agreement to get your first risk analysis.</p>
+          <a href="upload.html" class="btn btn--primary"><i class="ti ti-upload"></i> Analyze a document</a>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    if (!LexAuth.requireAuth()) { /* redirects */ }
+
+    const user = LexAuth.getUser();
+    if (user) {
+      const name = user.name || user.username;
+      document.getElementById('greeting').textContent = 'Welcome back, ' + name.split(' ')[0];
+      document.getElementById('user-name').textContent = user.name || user.username;
+      document.getElementById('user-email').textContent = user.email;
+    }
+
+    function logout() {
+      LexAuth.clear();
+      window.location.href = 'auth.html';
+    }
+
+    function scoreClass(score) {
+      if (score <= 30) return 'safe';
+      if (score <= 60) return 'caution';
+      return 'critical';
+    }
+
+    function scoreLabel(score) {
+      if (score <= 30) return 'Low risk';
+      if (score <= 60) return 'Moderate risk';
+      return 'High risk';
+    }
+
+    function renderDocs(docs) {
+      const grid = document.getElementById('doc-grid');
+      const empty = document.getElementById('empty-state');
+
+      if (!docs || docs.length === 0) {
+        grid.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+      }
+
+      grid.style.display = 'grid';
+      empty.style.display = 'none';
+
+      // Summary stats
+      const total = docs.length;
+      const criticalCount = docs.reduce((n, d) => n + (d.critical_count || 0), 0);
+      const highRisk = docs.filter(d => d.score > 60).length;
+      const avg = Math.round(docs.reduce((s, d) => s + (d.score || 0), 0) / total);
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-critical').textContent = criticalCount;
+      document.getElementById('stat-high-risk').textContent = highRisk;
+      document.getElementById('stat-avg').textContent = avg + ' / 100';
+
+      grid.innerHTML = docs.map(doc => {
+        const cls = scoreClass(doc.score);
+        const date = new Date(doc.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const statusBadge = (doc.status && doc.status !== 'completed')
+          ? `<span class="risk-badge risk-badge--neutral" style="margin-right:6px;"><i class="ti ti-loader"></i> ${escapeHtml(doc.status)}</span>`
+          : '';
+        const scoreBadge = (doc.status === 'completed' || doc.score > 0)
+          ? `<span class="risk-badge risk-badge--${cls}">
+               <i class="ti ti-${cls === 'critical' ? 'alert-triangle' : cls === 'caution' ? 'alert-circle' : 'circle-check'}"></i>
+               ${Math.round(doc.score)} / 100
+             </span>`
+          : statusBadge;
+        return `
+          <a class="doc-card" href="analysis.html?doc=${doc.id}&name=${encodeURIComponent(doc.name)}">
+            <div class="doc-card__type">${formatType(doc.type) || 'Contract'}</div>
+            <div class="doc-card__name">${escapeHtml(doc.name)}</div>
+            <div class="doc-card__org">${escapeHtml(doc.org || '')}</div>
+            <div class="doc-card__footer">
+              ${scoreBadge}
+              <span class="doc-card__date">${date}</span>
+            </div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    function formatType(t) {
+      if (!t) return '';
+      return String(t).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    /* Demo data — shown when document API isn't available yet */
+    const DEMO_DOCS = [
+      {
+        id: 'demo-1',
+        name: 'Employment Offer Letter',
+        org: 'TechCorp Inc.',
+        type: 'Offer letter',
+        score: 74,
+        critical_count: 3,
+        created_at: '2026-05-12T10:00:00Z',
+      },
+      {
+        id: 'demo-2',
+        name: 'Software License Agreement',
+        org: 'Acme SaaS Ltd.',
+        type: 'License',
+        score: 38,
+        critical_count: 0,
+        created_at: '2026-05-08T14:22:00Z',
+      },
+      {
+        id: 'demo-3',
+        name: 'Freelance Contract',
+        org: 'Design Studio Co.',
+        type: 'Freelance',
+        score: 12,
+        critical_count: 0,
+        created_at: '2026-04-30T09:15:00Z',
+      },
+      {
+        id: 'demo-4',
+        name: 'Rental Agreement',
+        org: '42 Oak Street Properties',
+        type: 'Lease',
+        score: 55,
+        critical_count: 1,
+        created_at: '2026-04-18T11:30:00Z',
+      },
+    ];
+
+    async function loadDocuments() {
+      try {
+        const docs = await LexAPI.documents.list();
+        if (!docs || docs.length === 0) {
+          // Real API responded but the user has no documents — show the empty state.
+          renderDocs([]);
+          return;
+        }
+        renderDocs(docs);
+      } catch (err) {
+        // Document API failure — show demo data with a notice.
+        document.getElementById('api-notice').style.display = 'flex';
+        renderDocs(DEMO_DOCS);
+      }
+    }
+
+    loadDocuments();
+  </script>
+</body>
+</html>

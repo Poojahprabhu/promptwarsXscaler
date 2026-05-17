@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LexGuard — AI Rights & Contract Intelligence</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body class="landing-body">
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav__inner">
+      <a href="index.html" class="logo">
+        <div class="logo__mark"><i class="ti ti-shield-check"></i></div>
+        <div>
+          <div class="logo__name">LexGuard</div>
+          <div class="logo__sub">AI Rights &amp; Contract Intelligence</div>
+        </div>
+      </a>
+      <div class="nav__actions">
+        <a href="auth.html?tab=login" class="btn btn--ghost">Sign in</a>
+        <a href="auth.html?tab=signup" class="btn btn--primary">Get started</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="landing-hero">
+    <div class="container">
+      <div class="landing-hero__eyebrow">
+        <i class="ti ti-shield-check"></i> Adversarial multi-agent AI
+      </div>
+      <h1 class="landing-hero__title">Know what you're agreeing to, before it's too late</h1>
+      <p class="landing-hero__subtitle">
+        LexGuard reads your contracts like a lawyer and flags everything that could hurt you — before you sign.
+      </p>
+      <div class="landing-hero__actions">
+        <a href="auth.html?tab=signup" class="btn btn--primary btn--large">
+          <i class="ti ti-scan"></i> Analyze your first document
+        </a>
+        <a href="#how-it-works" class="btn btn--secondary btn--large">See how it works</a>
+      </div>
+
+      <!-- Static demo card -->
+      <div class="demo-card">
+        <div class="demo-card__header">
+          <i class="ti ti-file-text demo-card__file-icon"></i>
+          <span class="demo-card__file-name">Employment Offer Letter · TechCorp Inc.</span>
+          <div class="demo-card__score">
+            <span class="text-label">Risk</span>
+            <span class="demo-card__score-num">74 / 100</span>
+          </div>
+        </div>
+        <div class="demo-card__body">
+          <div class="demo-clause">
+            <span class="risk-badge risk-badge--critical"><i class="ti ti-alert-triangle"></i> Critical risk</span>
+            <span class="demo-clause__text">All creative work belongs to the company — including personal projects built outside work hours.</span>
+          </div>
+          <div class="demo-clause">
+            <span class="risk-badge risk-badge--critical"><i class="ti ti-alert-triangle"></i> Critical risk</span>
+            <span class="demo-clause__text">You cannot work for any competitor for 2 years after leaving, anywhere in the world.</span>
+          </div>
+          <div class="demo-clause">
+            <span class="risk-badge risk-badge--caution"><i class="ti ti-alert-circle"></i> Caution</span>
+            <span class="demo-clause__text">You're waiving your right to sue in court. All disputes go to private arbitration.</span>
+          </div>
+          <div class="demo-clause">
+            <span class="risk-badge risk-badge--ambiguous"><i class="ti ti-info-circle"></i> Ambiguous</span>
+            <span class="demo-clause__text">"Proprietary information" is never defined — leaving the company wide discretion to claim violations later.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="landing-section" id="how-it-works">
+    <div class="container">
+      <div class="landing-section__header">
+        <h2 class="landing-section__heading">How it works</h2>
+        <p class="landing-section__sub">Three steps from document to full risk picture.</p>
+      </div>
+      <div class="how-grid">
+        <div class="how-step">
+          <div class="how-step__number">1</div>
+          <div class="how-step__title">Upload your document</div>
+          <p class="how-step__desc">Drop a PDF, DOCX, or paste a URL. LexGuard accepts contracts, offer letters, policies, tickets, and more.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step__number">2</div>
+          <div class="how-step__title">AI reads every clause</div>
+          <p class="how-step__desc">Our adversarial multi-agent system extracts each clause, tests it against legal norms, and assigns a severity rating.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step__number">3</div>
+          <div class="how-step__title">Get your risk report</div>
+          <p class="how-step__desc">See exactly what could hurt you, why it matters, and what to do about it — in plain language.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Risk categories -->
+  <section class="landing-section landing-section--alt">
+    <div class="container">
+      <div class="landing-section__header">
+        <h2 class="landing-section__heading">Five risk levels, clearly marked</h2>
+        <p class="landing-section__sub">Every clause gets a severity rating. Nothing is hidden or softened.</p>
+      </div>
+      <div class="risk-legend">
+        <div class="risk-legend-item">
+          <span class="risk-badge risk-badge--critical"><i class="ti ti-alert-triangle"></i> Critical risk</span>
+          <p class="risk-legend-item__desc">Clauses that expose you to major liability, unlimited damages, rights forfeiture, or legal jeopardy. Requires immediate attention before signing.</p>
+        </div>
+        <div class="risk-legend-item">
+          <span class="risk-badge risk-badge--caution"><i class="ti ti-alert-circle"></i> Caution</span>
+          <p class="risk-legend-item__desc">Unusual terms that disadvantage you but may be negotiable. Worth pushing back on before signing.</p>
+        </div>
+        <div class="risk-legend-item">
+          <span class="risk-badge risk-badge--ambiguous"><i class="ti ti-info-circle"></i> Ambiguous</span>
+          <p class="risk-legend-item__desc">Vague language, undefined terms, or unclear jurisdiction — the company can interpret these however it wants later.</p>
+        </div>
+        <div class="risk-legend-item">
+          <span class="risk-badge risk-badge--safe"><i class="ti ti-circle-check"></i> Safe</span>
+          <p class="risk-legend-item__desc">Standard, fair clauses with no unusual scope. Included for completeness.</p>
+        </div>
+        <div class="risk-legend-item">
+          <span class="risk-badge risk-badge--neutral"><i class="ti ti-minus"></i> Neutral</span>
+          <p class="risk-legend-item__desc">Boilerplate language with no notable risk. Nothing to act on.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Document types -->
+  <section class="landing-section">
+    <div class="container">
+      <div class="landing-section__header">
+        <h2 class="landing-section__heading">Analyzes any contract you sign</h2>
+        <p class="landing-section__sub">From big employment agreements to the terms you scroll past on checkout.</p>
+      </div>
+      <div class="doc-types-grid">
+        <div class="doc-type-item"><i class="ti ti-file-text"></i> Employment offer letters</div>
+        <div class="doc-type-item"><i class="ti ti-file-text"></i> Service contracts &amp; SLAs</div>
+        <div class="doc-type-item"><i class="ti ti-file-text"></i> Quotations &amp; purchase orders</div>
+        <div class="doc-type-item"><i class="ti ti-file-text"></i> Event &amp; ticket terms</div>
+        <div class="doc-type-item"><i class="ti ti-lock"></i> Privacy policies &amp; ToS</div>
+        <div class="doc-type-item"><i class="ti ti-file-text"></i> Rental &amp; lease agreements</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA strip -->
+  <section class="landing-cta-strip">
+    <div class="container">
+      <h2 class="landing-cta-strip__title">Stop signing what you haven't read</h2>
+      <p class="landing-cta-strip__sub">Upload your next contract before it's too late. Free to start.</p>
+      <a href="auth.html?tab=signup" class="btn btn--primary btn--large">
+        <i class="ti ti-upload"></i> Analyze a document now
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="landing-footer">
+    <a href="index.html" class="logo">
+      <div class="logo__mark"><i class="ti ti-shield-check"></i></div>
+      <span class="logo__name">LexGuard</span>
+    </a>
+    <span class="landing-footer__copy">AI Rights &amp; Contract Intelligence System</span>
+  </footer>
+
+</body>
+</html>

@@ -40,6 +40,7 @@ services:
     image: scaler_production_traefik
     depends_on:
       - django
+      - frontend
     volumes:
       - production_traefik:/etc/traefik/acme
     ports:
@@ -68,3 +69,13 @@ services:
     <<: *django
     image: scaler_production_flower
     command: /start-flower
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./compose/production/nginx/Dockerfile
+    image: scaler_production_frontend
+    volumes:
+      - .:/app
+    depends_on:
+      - django

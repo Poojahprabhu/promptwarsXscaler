@@ -36,7 +36,7 @@ http:
         - web-secure
       middlewares:
         - csrf
-      service: django
+      service: frontend
       tls:
         # https://doc.traefik.io/traefik/routing/routers/#certresolver
         certResolver: letsencrypt
@@ -67,6 +67,11 @@ http:
       loadBalancer:
         servers:
           - url: http://flower:5555
+
+    frontend:
+      loadBalancer:
+        servers:
+          - url: http://frontend:80
 
 providers:
   # https://doc.traefik.io/traefik/master/providers/file/

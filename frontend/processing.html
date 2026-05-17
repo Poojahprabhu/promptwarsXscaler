@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analyzing document — LexGuard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+  <div class="centered-page">
+
+    <!-- Nav -->
+    <nav class="nav">
+      <div class="nav__inner">
+        <a href="dashboard.html" class="logo">
+          <div class="logo__mark"><i class="ti ti-shield-check"></i></div>
+          <div>
+            <div class="logo__name">LexGuard</div>
+            <div class="logo__sub">AI Rights &amp; Contract Intelligence</div>
+          </div>
+        </a>
+      </div>
+    </nav>
+
+    <div class="centered-page__content">
+
+      <!-- Document name -->
+      <div style="margin-bottom:2rem; text-align:center;">
+        <div class="text-label" style="margin-bottom:6px;">Analyzing</div>
+        <h1 style="font-size:18px; font-weight:500;" id="doc-name">Your document</h1>
+        <p style="font-size:13px; color:var(--color-text-secondary); margin-top:4px;">
+          Our adversarial multi-agent system is reading every clause. This takes 20–60 seconds.
+        </p>
+      </div>
+
+      <!-- Demo mode notice -->
+      <div id="demo-notice" class="alert alert--info" style="display:none; margin-bottom:1.5rem;">
+        <i class="ti ti-info-circle"></i>
+        <span>Running in demo mode. The processing timeline is simulated — connect the status API to get real progress updates.</span>
+      </div>
+
+      <!-- Error -->
+      <div id="proc-error" class="alert alert--danger" style="display:none; margin-bottom:1.5rem;">
+        <i class="ti ti-alert-triangle"></i>
+        <span id="proc-error-text"></span>
+      </div>
+
+      <!-- Step list -->
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="step-list" id="step-list">
+
+          <div class="step" id="step-0">
+            <div class="step__dot step__dot--waiting" id="step-0-dot">
+              <i class="ti ti-file-text"></i>
+            </div>
+            <div class="step__body">
+              <div class="step__title step__title--waiting" id="step-0-title">Extracting document text</div>
+              <div class="step__desc">Reading structure, sections, and raw clause text</div>
+            </div>
+          </div>
+
+          <div class="step" id="step-1">
+            <div class="step__dot step__dot--waiting" id="step-1-dot">
+              <i class="ti ti-scan"></i>
+            </div>
+            <div class="step__body">
+              <div class="step__title step__title--waiting" id="step-1-title">Identifying clauses</div>
+              <div class="step__desc">Segmenting legal provisions and key terms</div>
+            </div>
+          </div>
+
+          <div class="step" id="step-2">
+            <div class="step__dot step__dot--waiting" id="step-2-dot">
+              <i class="ti ti-robot"></i>
+            </div>
+            <div class="step__body">
+              <div class="step__title step__title--waiting" id="step-2-title">Running adversarial analysis</div>
+              <div class="step__desc">Testing each clause against legal standards and user-protection norms</div>
+            </div>
+          </div>
+
+          <div class="step" id="step-3">
+            <div class="step__dot step__dot--waiting" id="step-3-dot">
+              <i class="ti ti-scale"></i>
+            </div>
+            <div class="step__body">
+              <div class="step__title step__title--waiting" id="step-3-title">Scoring risk</div>
+              <div class="step__desc">Assigning severity levels: critical, caution, ambiguous, safe, neutral</div>
+            </div>
+          </div>
+
+          <div class="step" id="step-4">
+            <div class="step__dot step__dot--waiting" id="step-4-dot">
+              <i class="ti ti-download"></i>
+            </div>
+            <div class="step__body">
+              <div class="step__title step__title--waiting" id="step-4-title">Compiling report</div>
+              <div class="step__desc">Generating your full risk report with plain-language explanations</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Cancel link -->
+      <div style="text-align:center;">
+        <a href="dashboard.html" style="font-size:13px; color:var(--color-text-tertiary);">Cancel and return to dashboard</a>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    if (!LexAuth.requireAuth()) { /* redirects */ }
+
+    const params = new URLSearchParams(window.location.search);
+    const docId = params.get('doc');
+    const docName = params.get('name') || 'Your document';
+    const isDemo = docId === 'demo';
+
+    document.getElementById('doc-name').textContent = decodeURIComponent(docName);
+
+    if (isDemo) {
+      document.getElementById('demo-notice').style.display = 'flex';
+    }
+
+    /* ── Step state machine ── */
+    const STEPS = [
+      { duration: 2200 },
+      { duration: 3000 },
+      { duration: 5000 },
+      { duration: 2500 },
+      { duration: 1800 },
+    ];
+
+    function markDone(stepIndex) {
+      const dot = document.getElementById('step-' + stepIndex + '-dot');
+      const title = document.getElementById('step-' + stepIndex + '-title');
+      dot.className = 'step__dot step__dot--done';
+      dot.innerHTML = '<i class="ti ti-check"></i>';
+      title.classList.remove('step__title--waiting');
+    }
+
+    function markActive(stepIndex) {
+      const dot = document.getElementById('step-' + stepIndex + '-dot');
+      const title = document.getElementById('step-' + stepIndex + '-title');
+      dot.className = 'step__dot step__dot--active';
+      title.classList.remove('step__title--waiting');
+    }
+
+    function runDemoSteps(stepIndex) {
+      if (stepIndex >= STEPS.length) {
+        // All done — go to analysis page
+        setTimeout(() => {
+          window.location.href = 'analysis.html?doc=' + encodeURIComponent(docId) + '&name=' + encodeURIComponent(docName);
+        }, 400);
+        return;
+      }
+      markActive(stepIndex);
+      setTimeout(() => {
+        markDone(stepIndex);
+        runDemoSteps(stepIndex + 1);
+      }, STEPS[stepIndex].duration);
+    }
+
+    /* ── Real API polling ── */
+    let pollTimer = null;
+
+    async function pollStatus() {
+      if (!docId || docId === 'undefined') {
+        clearInterval(pollTimer);
+        return;
+      }
+      try {
+        const res = await LexAPI.documents.status(docId);
+        // Backend status values: pending | processing | completed | failed
+        const statusToProgress = { pending: 5, processing: 50, completed: 100, failed: 100 };
+        updateStepsFromProgress(statusToProgress[res.status] ?? 0);
+
+        if (res.status === 'completed') {
+          clearInterval(pollTimer);
+          window.location.href = 'analysis.html?doc=' + encodeURIComponent(docId) + '&name=' + encodeURIComponent(docName);
+        } else if (res.status === 'failed') {
+          clearInterval(pollTimer);
+          const detail = res.error_message ? ': ' + res.error_message : '';
+          document.getElementById('proc-error-text').textContent = 'Analysis failed' + detail;
+          document.getElementById('proc-error').style.display = 'flex';
+        }
+      } catch {
+        // If the status API isn't ready, just keep trying silently
+      }
+    }
+
+    function updateStepsFromProgress(progress) {
+      const stepsTotal = STEPS.length;
+      const stepsComplete = Math.floor((progress / 100) * stepsTotal);
+      for (let i = 0; i < stepsComplete; i++) markDone(i);
+      if (stepsComplete < stepsTotal) markActive(stepsComplete);
+    }
+
+    /* Start demo or real polling */
+    if (isDemo) {
+      runDemoSteps(0);
+    } else {
+      markActive(0);
+      pollStatus();
+      pollTimer = setInterval(pollStatus, 3000);
+    }
+  </script>
+</body>
+</html>

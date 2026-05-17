@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload document — LexGuard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+  <div class="centered-page">
+
+    <!-- Nav -->
+    <nav class="nav">
+      <div class="nav__inner">
+        <a href="dashboard.html" class="logo">
+          <div class="logo__mark"><i class="ti ti-shield-check"></i></div>
+          <div>
+            <div class="logo__name">LexGuard</div>
+            <div class="logo__sub">AI Rights &amp; Contract Intelligence</div>
+          </div>
+        </a>
+        <div class="nav__actions">
+          <span class="nav__user" id="nav-user-name"></span>
+          <a href="dashboard.html" class="btn btn--ghost"><i class="ti ti-layout-dashboard"></i> Dashboard</a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="centered-page__content">
+
+      <a href="dashboard.html" class="centered-page__back">
+        <i class="ti ti-arrow-left"></i> Back to dashboard
+      </a>
+
+      <div style="margin-bottom:1.5rem;">
+        <h1 class="page-header__title">Upload a document</h1>
+        <p class="page-header__sub" style="margin-top:4px;">Drop your contract, offer letter, or policy. LexGuard will analyze every clause.</p>
+      </div>
+
+      <!-- Error / info banners -->
+      <div id="upload-error" class="alert alert--danger" style="display:none; margin-bottom:1rem;">
+        <i class="ti ti-alert-triangle"></i>
+        <span id="upload-error-text"></span>
+      </div>
+      <div id="api-notice" class="alert alert--info" style="display:none; margin-bottom:1rem;">
+        <i class="ti ti-info-circle"></i>
+        <span>Document upload API not yet configured. Running in demo mode — you'll see a simulated analysis.</span>
+      </div>
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="upload-zone" onclick="triggerFilePicker()">
+        <input type="file" id="file-input" accept=".pdf,.doc,.docx,.txt" onchange="onFileSelected(event)" />
+        <div class="upload-zone__icon"><i class="ti ti-upload"></i></div>
+        <div class="upload-zone__title">Drop your document here, or click to browse</div>
+        <div class="upload-zone__subtitle" style="margin-top:4px;">Accepts PDF, Word (.docx), and plain text files</div>
+      </div>
+
+      <!-- File preview (hidden until file selected) -->
+      <div id="file-preview" class="file-preview" style="display:none;">
+        <i class="ti ti-file-text file-preview__icon"></i>
+        <div>
+          <div class="file-preview__name" id="file-name"></div>
+          <div class="file-preview__size" id="file-size"></div>
+        </div>
+        <button class="file-preview__remove" onclick="removeFile()" title="Remove">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+
+      <!-- Supported types list -->
+      <div style="margin-top:1.5rem;">
+        <div class="text-label" style="margin-bottom:10px;">Works with</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+          <span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--color-text-secondary);">
+            <i class="ti ti-file-text" style="color:var(--color-brand-iris);"></i> Offer letters
+          </span>
+          <span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--color-text-secondary);">
+            <i class="ti ti-file-text" style="color:var(--color-brand-iris);"></i> Service contracts
+          </span>
+          <span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--color-text-secondary);">
+            <i class="ti ti-lock" style="color:var(--color-brand-iris);"></i> Privacy policies
+          </span>
+          <span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--color-text-secondary);">
+            <i class="ti ti-file-text" style="color:var(--color-brand-iris);"></i> Rental agreements
+          </span>
+          <span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--color-text-secondary);">
+            <i class="ti ti-file-text" style="color:var(--color-brand-iris);"></i> Quotations &amp; SLAs
+          </span>
+          <span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--color-text-secondary);">
+            <i class="ti ti-file-text" style="color:var(--color-brand-iris);"></i> Ticket &amp; event terms
+          </span>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <a href="dashboard.html" class="btn btn--secondary">Cancel</a>
+        <button class="btn btn--primary" id="analyze-btn" onclick="startAnalysis()" disabled>
+          <i class="ti ti-scan"></i> Analyze document
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    if (!LexAuth.requireAuth()) { /* redirects */ }
+
+    const user = LexAuth.getUser();
+    if (user) {
+      document.getElementById('nav-user-name').textContent = user.name || user.username;
+    }
+
+    let selectedFile = null;
+
+    function triggerFilePicker() {
+      document.getElementById('file-input').click();
+    }
+
+    function onFileSelected(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      setFile(file);
+    }
+
+    function setFile(file) {
+      selectedFile = file;
+      document.getElementById('file-name').textContent = file.name;
+      document.getElementById('file-size').textContent = formatSize(file.size);
+      document.getElementById('file-preview').style.display = 'flex';
+      document.getElementById('analyze-btn').disabled = false;
+      document.getElementById('upload-error').style.display = 'none';
+    }
+
+    function removeFile() {
+      selectedFile = null;
+      document.getElementById('file-input').value = '';
+      document.getElementById('file-preview').style.display = 'none';
+      document.getElementById('analyze-btn').disabled = true;
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    // Drag-and-drop
+    const zone = document.getElementById('upload-zone');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) setFile(file);
+    });
+
+    async function startAnalysis() {
+      if (!selectedFile) return;
+
+      const btn = document.getElementById('analyze-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Uploading…';
+      document.getElementById('upload-error').style.display = 'none';
+
+      try {
+        const res = await LexAPI.documents.upload(selectedFile);
+        // API returned a doc ID — go to processing page
+        window.location.href = 'processing.html?doc=' + encodeURIComponent(res.document_id) + '&name=' + encodeURIComponent(selectedFile.name);
+      } catch (err) {
+        if (err.isNetworkError || (err.message && err.message.includes('not yet configured'))) {
+          // Demo mode: skip to processing with a fake ID
+          document.getElementById('api-notice').style.display = 'flex';
+          setTimeout(() => {
+            window.location.href = 'processing.html?doc=demo&name=' + encodeURIComponent(selectedFile.name);
+          }, 800);
+        } else {
+          document.getElementById('upload-error-text').textContent = LexAPI.extractErrors(err);
+          document.getElementById('upload-error').style.display = 'flex';
+          btn.disabled = false;
+          btn.innerHTML = '<i class="ti ti-scan"></i> Analyze document';
+        }
+      }
+    }
+  </script>
+</body>
+</html>
