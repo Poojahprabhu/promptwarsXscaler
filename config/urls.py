@@ -19,6 +19,8 @@ urlpatterns = [
     # User management
     path("users/", include("scaler.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
+    # JWT Auth API
+    path("api/v1/", include("scaler.users.api_urls")),
     # Your stuff: custom urls includes go here
     # ...
     # Media files

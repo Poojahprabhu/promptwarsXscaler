@@ -3,6 +3,15 @@
 set -o errexit
 set -o nounset
 
+# Wait until all Django migrations have been applied before starting beat.
+# django_celery_beat queries its scheduler tables on startup, which will fail
+# if the django service hasn't finished running `manage.py migrate` yet.
+echo "Waiting for Django migrations to complete..."
+until python manage.py migrate --check 2>/dev/null; do
+  echo "Migrations not yet applied — retrying in 2s..."
+  sleep 2
+done
+echo "Migrations complete. Starting Celery Beat."
 
 rm -f './celerybeat.pid'
 exec watchfiles --filter python celery.__main__.main --args '-A config.celery_app beat -l INFO'

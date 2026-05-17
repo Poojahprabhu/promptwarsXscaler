@@ -3,5 +3,12 @@
 set -o errexit
 set -o nounset
 
+# Wait until all Django migrations have been applied before starting the worker.
+echo "Waiting for Django migrations to complete..."
+until python manage.py migrate --check 2>/dev/null; do
+  echo "Migrations not yet applied — retrying in 2s..."
+  sleep 2
+done
+echo "Migrations complete. Starting Celery Worker."
 
 exec watchfiles --filter python celery.__main__.main --args '-A config.celery_app worker -l INFO'
