@@ -41,7 +41,7 @@ dependencies = [
   "uvicorn[standard]==0.47.0",
   # Document processing pipeline
   "google-adk>=1.0.0",
-  "google-genai>=1.0.0",
+  "google-genai>=2.4.0",
   "google-cloud-vision>=3.7.0",
   "google-cloud-storage>=2.16.0",
   "litellm>=1.50.0",
